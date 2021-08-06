@@ -1,0 +1,43 @@
+version: '3.6'
+services:
+# https://hub.docker.com/_/postgres
+ db:
+  container_name : postgres
+  image: postgres
+  environment:
+   #PGDATA: /var/lib/postgresql/data/pgdata
+   POSTGRES_DB: test_db
+   POSTGRES_USER: user
+   POSTGRES_PASSWORD: pass
+   #POSTGRES_INITDB_ARGS: "--encoding=UTF-8 --locale=ja_JP.UTF-8 "
+  ports:
+   - 5432:5432
+  restart: always
+
+# https://github.com/suzel/docker-postgrest
+ api:
+  container_name : postgrest
+  image: postgrest/postgrest
+  links:
+    - db:db
+  depends_on:
+    - db
+  ports:
+    - "3000:3000"
+  restart: always
+  environment:
+     PGRST_DB_URI: postgres://user:pass@db:5432/test_db
+     PGRST_DB_SCHEMA: public
+     PGRST_DB_ANON_ROLE: user
+
+# https://hub.docker.com/r/sosedoff/pgweb
+ pgweb:
+  container_name : pgweb
+  restart: always
+  image: sosedoff/pgweb
+  ports:
+    - "8081:8081"
+  environment:
+    - DATABASE_URL=postgres://user:pass@db:5432/test_db?sslmode=disable
+  depends_on:
+    - db
